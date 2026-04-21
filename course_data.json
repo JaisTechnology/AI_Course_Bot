@@ -1,0 +1,276 @@
+{
+  "courses": [
+    {
+      "name": "Python for Data Science",
+      "aliases": ["python", "data science"],
+      "fees": "INR 25,000",
+      "duration": "12 weeks",
+      "mode": "Online and weekend live sessions",
+      "eligibility": "Basic programming knowledge preferred",
+      "certification": "Industry-recognized course completion certificate",
+      "syllabus": [
+        "Python basics",
+        "NumPy",
+        "Pandas",
+        "Data visualization",
+        "Statistics foundations",
+        "Machine learning introduction"
+      ]
+    },
+    {
+      "name": "Full Stack Web Development",
+      "aliases": ["full stack", "web development"],
+      "fees": "INR 35,000",
+      "duration": "16 weeks",
+      "mode": "Hybrid",
+      "eligibility": "No prior experience required",
+      "certification": "Project-based certification",
+      "syllabus": [
+        "HTML and CSS",
+        "JavaScript",
+        "React basics",
+        "Python backend",
+        "Databases",
+        "Deployment fundamentals"
+      ]
+    },
+    {
+      "name": "UI/UX Design",
+      "aliases": ["ui ux", "design"],
+      "fees": "INR 22,000",
+      "duration": "10 weeks",
+      "mode": "Online",
+      "eligibility": "Open to beginners",
+      "certification": "Portfolio review certificate",
+      "syllabus": [
+        "Design principles",
+        "Wireframing",
+        "User research",
+        "Figma fundamentals",
+        "Prototyping",
+        "Usability testing"
+      ]
+    },
+    {
+      "name": "Cybersecurity Fundamentals",
+      "aliases": ["cybersecurity", "cyber security", "security"],
+      "fees": "INR 32,000",
+      "duration": "14 weeks",
+      "mode": "Online and lab-based sessions",
+      "eligibility": "Basic networking knowledge preferred",
+      "certification": "Cybersecurity fundamentals certificate",
+      "syllabus": [
+        "Network security basics",
+        "Threats and vulnerabilities",
+        "Linux security",
+        "SIEM introduction",
+        "Incident response",
+        "Security best practices"
+      ]
+    },
+    {
+      "name": "Generative AI and LLM Engineering",
+      "aliases": ["llm", "generative ai", "gen ai", "ai engineering"],
+      "fees": "INR 42,000",
+      "duration": "12 weeks",
+      "mode": "Online",
+      "eligibility": "Python knowledge recommended",
+      "certification": "LLM engineering completion certificate",
+      "syllabus": [
+        "Prompt engineering",
+        "Transformers overview",
+        "Embeddings and vector databases",
+        "RAG pipelines",
+        "LLM app development",
+        "Evaluation and guardrails"
+      ]
+    },
+    {
+      "name": "Java Programming",
+      "aliases": ["java", "core java"],
+      "fees": "INR 24,000",
+      "duration": "10 weeks",
+      "mode": "Online and weekend live sessions",
+      "eligibility": "No prior experience required",
+      "certification": "Java programming certificate",
+      "syllabus": [
+        "Java syntax",
+        "Object-oriented programming",
+        "Collections framework",
+        "Exception handling",
+        "File handling",
+        "Mini projects"
+      ]
+    },
+    {
+      "name": "Advanced Java and Spring Boot",
+      "aliases": ["spring boot", "advanced java", "java backend"],
+      "fees": "INR 36,000",
+      "duration": "14 weeks",
+      "mode": "Hybrid",
+      "eligibility": "Core Java knowledge required",
+      "certification": "Backend development with Spring Boot certificate",
+      "syllabus": [
+        "JDBC and JPA",
+        "Spring Core",
+        "Spring Boot APIs",
+        "Security and authentication",
+        "Microservices basics",
+        "Deployment"
+      ]
+    },
+    {
+      "name": "Machine Learning with Python",
+      "aliases": ["machine learning", "ml", "ml with python"],
+      "fees": "INR 38,000",
+      "duration": "14 weeks",
+      "mode": "Online",
+      "eligibility": "Python and basic mathematics recommended",
+      "certification": "Machine learning certificate",
+      "syllabus": [
+        "Supervised learning",
+        "Unsupervised learning",
+        "Feature engineering",
+        "Model evaluation",
+        "Scikit-learn workflows",
+        "Capstone project"
+      ]
+    },
+    {
+      "name": "Data Engineering",
+      "aliases": ["data engineering", "etl", "data pipelines"],
+      "fees": "INR 40,000",
+      "duration": "15 weeks",
+      "mode": "Online",
+      "eligibility": "SQL and Python basics preferred",
+      "certification": "Data engineering completion certificate",
+      "syllabus": [
+        "SQL for analytics",
+        "ETL pipelines",
+        "Apache Airflow basics",
+        "Data warehousing",
+        "Spark fundamentals",
+        "Pipeline monitoring"
+      ]
+    },
+    {
+      "name": "Cloud Computing with AWS",
+      "aliases": ["aws", "cloud computing", "cloud"],
+      "fees": "INR 34,000",
+      "duration": "12 weeks",
+      "mode": "Online and weekend live sessions",
+      "eligibility": "Basic IT knowledge preferred",
+      "certification": "AWS cloud foundations certificate",
+      "syllabus": [
+        "Cloud fundamentals",
+        "EC2 and S3",
+        "IAM and security",
+        "VPC basics",
+        "Monitoring and billing",
+        "Deployment workflows"
+      ]
+    },
+    {
+      "name": "DevOps and CI/CD",
+      "aliases": ["devops", "ci cd", "cicd"],
+      "fees": "INR 37,000",
+      "duration": "13 weeks",
+      "mode": "Hybrid",
+      "eligibility": "Linux and Git basics recommended",
+      "certification": "DevOps practices certificate",
+      "syllabus": [
+        "Linux fundamentals",
+        "Git and GitHub workflows",
+        "Docker",
+        "Jenkins pipelines",
+        "Kubernetes basics",
+        "Infrastructure automation"
+      ]
+    },
+    {
+      "name": "Mobile App Development with Flutter",
+      "aliases": ["flutter", "mobile app development", "app development"],
+      "fees": "INR 33,000",
+      "duration": "12 weeks",
+      "mode": "Online",
+      "eligibility": "Programming basics preferred",
+      "certification": "Flutter development certificate",
+      "syllabus": [
+        "Dart basics",
+        "Flutter widgets",
+        "State management",
+        "REST API integration",
+        "Firebase basics",
+        "App deployment"
+      ]
+    },
+    {
+      "name": "Digital Marketing",
+      "aliases": ["digital marketing", "marketing", "seo"],
+      "fees": "INR 20,000",
+      "duration": "8 weeks",
+      "mode": "Online",
+      "eligibility": "Open to beginners",
+      "certification": "Digital marketing certificate",
+      "syllabus": [
+        "SEO basics",
+        "Social media marketing",
+        "Google Ads",
+        "Content strategy",
+        "Email marketing",
+        "Campaign analytics"
+      ]
+    },
+    {
+      "name": "Business Analytics",
+      "aliases": ["business analytics", "analytics"],
+      "fees": "INR 29,000",
+      "duration": "10 weeks",
+      "mode": "Online and weekend live sessions",
+      "eligibility": "Basic Excel knowledge preferred",
+      "certification": "Business analytics certificate",
+      "syllabus": [
+        "Excel analytics",
+        "SQL basics",
+        "Power BI dashboards",
+        "KPI reporting",
+        "Data storytelling",
+        "Case studies"
+      ]
+    },
+    {
+      "name": "Software Testing and QA",
+      "aliases": ["software testing", "qa", "testing"],
+      "fees": "INR 23,000",
+      "duration": "9 weeks",
+      "mode": "Hybrid",
+      "eligibility": "No prior experience required",
+      "certification": "QA testing certificate",
+      "syllabus": [
+        "Testing fundamentals",
+        "Manual testing",
+        "Test case design",
+        "Bug tracking",
+        "Selenium basics",
+        "API testing introduction"
+      ]
+    },
+    {
+      "name": "MERN Stack Development",
+      "aliases": ["mern", "mern stack", "mongodb express react node"],
+      "fees": "INR 36,000",
+      "duration": "15 weeks",
+      "mode": "Online",
+      "eligibility": "HTML, CSS, and JavaScript basics preferred",
+      "certification": "MERN stack certificate",
+      "syllabus": [
+        "MongoDB",
+        "Express.js",
+        "React components",
+        "Node.js backend",
+        "Authentication",
+        "Project deployment"
+      ]
+    }
+  ]
+}
