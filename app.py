@@ -1,7 +1,9 @@
 import json
 import os
+import sqlite3
 from pathlib import Path
 from typing import Dict, List, Tuple
+from datetime import datetime
 
 import streamlit as st
 
@@ -18,6 +20,7 @@ except ImportError:
 
 DATA_FILE = Path(__file__).parent / "course_data.json"
 ENV_FILE = Path(__file__).parent / ".env"
+DB_FILE = Path(__file__).parent / "automation_assistant.db"
 DEFAULT_CHAT_MODEL = "llama-3.3-70b-versatile"
 
 
@@ -27,9 +30,103 @@ def load_courses() -> Dict[str, Dict]:
     return {course["name"].lower(): course for course in raw["courses"]}
 
 
+def get_db_connection() -> sqlite3.Connection:
+    connection = sqlite3.connect(DB_FILE)
+    connection.row_factory = sqlite3.Row
+    return connection
+
+
+def init_db() -> None:
+    with get_db_connection() as connection:
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS leads (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                full_name TEXT NOT NULL,
+                email TEXT NOT NULL,
+                phone TEXT NOT NULL,
+                interested_course TEXT NOT NULL,
+                message TEXT,
+                source TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS automation_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                event_type TEXT NOT NULL,
+                details TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.commit()
+
+
+def log_automation_event(event_type: str, details: str) -> None:
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with get_db_connection() as connection:
+        connection.execute(
+            "INSERT INTO automation_logs (event_type, details, created_at) VALUES (?, ?, ?)",
+            (event_type, details, timestamp),
+        )
+        connection.commit()
+
+
+def save_lead(full_name: str, email: str, phone: str, interested_course: str, message: str, source: str) -> None:
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with get_db_connection() as connection:
+        connection.execute(
+            """
+            INSERT INTO leads (full_name, email, phone, interested_course, message, source, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (full_name, email, phone, interested_course, message, source, timestamp),
+        )
+        connection.commit()
+    log_automation_event(
+        "lead_capture",
+        f"Lead captured for {interested_course} from {full_name} ({email}) via {source}.",
+    )
+
+
+def fetch_leads() -> List[sqlite3.Row]:
+    with get_db_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT id, full_name, email, phone, interested_course, message, source, created_at
+            FROM leads
+            ORDER BY id DESC
+            """
+        ).fetchall()
+    return rows
+
+
+def fetch_automation_logs() -> List[sqlite3.Row]:
+    with get_db_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT id, event_type, details, created_at
+            FROM automation_logs
+            ORDER BY id DESC
+            LIMIT 10
+            """
+        ).fetchall()
+    return rows
+
+
 def load_environment() -> None:
     if load_dotenv is not None and ENV_FILE.exists():
         load_dotenv(ENV_FILE)
+
+
+def get_api_key() -> str:
+    secret_value = st.secrets.get("GROQ_API_KEY", "")
+    if secret_value:
+        return str(secret_value)
+    return os.getenv("GROQ_API_KEY", "")
 
 
 def inject_styles() -> None:
@@ -180,6 +277,28 @@ def inject_styles() -> None:
                 line-height: 1.5;
             }
 
+            .panel-card {
+                padding: 1rem 1.05rem;
+                border: 1px solid rgba(148, 163, 184, 0.14);
+                border-radius: 8px;
+                background: rgba(15, 23, 42, 0.7);
+                margin-bottom: 1rem;
+                animation: fade-up 0.45s ease-out;
+            }
+
+            .panel-title {
+                color: #f8fafc;
+                font-size: 1rem;
+                font-weight: 600;
+                margin-bottom: 0.45rem;
+            }
+
+            .panel-copy {
+                color: #cbd5e1;
+                font-size: 0.92rem;
+                line-height: 1.55;
+            }
+
             [data-testid="stChatMessage"] {
                 border: 1px solid rgba(148, 163, 184, 0.12);
                 border-radius: 8px;
@@ -302,6 +421,12 @@ def get_dashboard_stats(courses: Dict[str, Dict]) -> Tuple[int, int, int]:
     return total_courses, beginner_courses, online_courses
 
 
+def get_lead_stats() -> Tuple[int, int]:
+    leads = fetch_leads()
+    automation_logs = fetch_automation_logs()
+    return len(leads), len(automation_logs)
+
+
 def answer_from_catalog(question: str, courses: Dict[str, Dict]) -> Tuple[str, bool]:
     course = find_course(question, courses)
     topics = extract_topics(question)
@@ -404,6 +529,7 @@ def generate_response(
 
 def render_dashboard(courses: Dict[str, Dict]) -> None:
     total_courses, beginner_courses, online_courses = get_dashboard_stats(courses)
+    total_leads, logged_automations = get_lead_stats()
 
     st.markdown(
         """
@@ -419,7 +545,7 @@ def render_dashboard(courses: Dict[str, Dict]) -> None:
         unsafe_allow_html=True,
     )
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.markdown(
             f"""
@@ -453,6 +579,17 @@ def render_dashboard(courses: Dict[str, Dict]) -> None:
             """,
             unsafe_allow_html=True,
         )
+    with col4:
+        st.markdown(
+            f"""
+            <div class="stat-card">
+                <div class="stat-label">Captured Leads</div>
+                <div class="stat-value">{total_leads}</div>
+                <div class="stat-note">{logged_automations} automation events logged from form submissions and workflows.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 
 def render_sidebar(courses: Dict[str, Dict]) -> None:
@@ -464,11 +601,90 @@ def render_sidebar(courses: Dict[str, Dict]) -> None:
                 f"""
                 <div class="course-card">
                     <div class="course-name">{course['name']}</div>
-                    <div class="course-meta">{course['duration']} • {course['fees']}<br>{course['mode']}</div>
+                    <div class="course-meta">{course['duration']} | {course['fees']}<br>{course['mode']}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
+
+
+def render_lead_form(courses: Dict[str, Dict]) -> None:
+    st.markdown('<div class="section-label">Lead Capture Form</div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="panel-card">
+            <div class="panel-title">Request a callback or counseling session</div>
+            <div class="panel-copy">This form stores leads in SQLite and triggers an automation log entry after submission.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    course_names = [course["name"] for course in courses.values()]
+    with st.form("lead_capture_form", clear_on_submit=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            full_name = st.text_input("Full Name")
+            email = st.text_input("Email")
+            phone = st.text_input("Phone")
+        with col2:
+            interested_course = st.selectbox("Interested Course", options=course_names)
+            source = st.selectbox("Lead Source", options=["Website Chatbot", "Career Counseling", "Direct Inquiry"])
+            message = st.text_area("Message", height=110)
+        submitted = st.form_submit_button("Submit Lead")
+
+    if submitted:
+        if not full_name.strip() or not email.strip() or not phone.strip():
+            st.warning("Please fill in name, email, and phone before submitting the lead.")
+        else:
+            save_lead(
+                full_name=full_name.strip(),
+                email=email.strip(),
+                phone=phone.strip(),
+                interested_course=interested_course,
+                message=message.strip(),
+                source=source,
+            )
+            st.success("Lead captured successfully. Automation log updated.")
+
+
+def render_admin_dashboard() -> None:
+    st.markdown('<div class="section-label">Admin Dashboard</div>', unsafe_allow_html=True)
+    tabs = st.tabs(["Lead Records", "Automation Logs"])
+
+    leads = fetch_leads()
+    logs = fetch_automation_logs()
+
+    with tabs[0]:
+        if leads:
+            lead_table = [
+                {
+                    "Name": row["full_name"],
+                    "Email": row["email"],
+                    "Phone": row["phone"],
+                    "Course": row["interested_course"],
+                    "Source": row["source"],
+                    "Submitted At": row["created_at"],
+                }
+                for row in leads
+            ]
+            st.dataframe(lead_table, use_container_width=True)
+        else:
+            st.info("No leads captured yet.")
+
+    with tabs[1]:
+        if logs:
+            log_table = [
+                {
+                    "Event": row["event_type"],
+                    "Details": row["details"],
+                    "Created At": row["created_at"],
+                }
+                for row in logs
+            ]
+            st.dataframe(log_table, use_container_width=True)
+        else:
+            st.info("No automation events logged yet.")
 
 
 def render_suggestions() -> str | None:
@@ -498,11 +714,13 @@ def main() -> None:
     inject_styles()
 
     load_environment()
+    init_db()
     courses = load_courses()
-    env_api_key = os.getenv("GROQ_API_KEY", "")
+    env_api_key = get_api_key()
 
     render_sidebar(courses)
     render_dashboard(courses)
+    render_lead_form(courses)
 
     if "messages" not in st.session_state:
         st.session_state.messages = [
@@ -517,6 +735,8 @@ def main() -> None:
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
+
+    render_admin_dashboard()
 
     prompt = st.chat_input("Ask a course question or enter any prompt")
     prompt = prompt or suggested_prompt
