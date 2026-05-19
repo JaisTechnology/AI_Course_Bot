@@ -129,6 +129,13 @@ def get_api_key() -> str:
     return os.getenv("GROQ_API_KEY", "")
 
 
+def get_admin_password() -> str:
+    secret_value = st.secrets.get("ADMIN_PASSWORD", "")
+    if secret_value:
+        return str(secret_value)
+    return os.getenv("ADMIN_PASSWORD", "admin123")
+
+
 def inject_styles() -> None:
     st.markdown(
         """
@@ -299,6 +306,44 @@ def inject_styles() -> None:
                 line-height: 1.55;
             }
 
+            .admin-shell {
+                padding: 1.25rem;
+                border: 1px solid rgba(96, 165, 250, 0.18);
+                border-radius: 8px;
+                background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.82));
+                margin-bottom: 1rem;
+                animation: fade-up 0.45s ease-out;
+            }
+
+            .admin-title {
+                color: #f8fafc;
+                font-size: 1.15rem;
+                font-weight: 700;
+                margin-bottom: 0.35rem;
+            }
+
+            .admin-copy {
+                color: #cbd5e1;
+                font-size: 0.92rem;
+                line-height: 1.55;
+            }
+
+            .admin-lock {
+                padding: 1rem 1.05rem;
+                border: 1px dashed rgba(248, 113, 113, 0.32);
+                border-radius: 8px;
+                background: rgba(127, 29, 29, 0.12);
+                margin-bottom: 1rem;
+            }
+
+            .nav-card {
+                padding: 0.9rem 1rem;
+                border: 1px solid rgba(148, 163, 184, 0.12);
+                border-radius: 8px;
+                background: rgba(15, 23, 42, 0.74);
+                margin-bottom: 0.9rem;
+            }
+
             [data-testid="stChatMessage"] {
                 border: 1px solid rgba(148, 163, 184, 0.12);
                 border-radius: 8px;
@@ -425,6 +470,14 @@ def get_lead_stats() -> Tuple[int, int]:
     leads = fetch_leads()
     automation_logs = fetch_automation_logs()
     return len(leads), len(automation_logs)
+
+
+def get_source_breakdown() -> Dict[str, int]:
+    leads = fetch_leads()
+    breakdown: Dict[str, int] = {}
+    for row in leads:
+        breakdown[row["source"]] = breakdown.get(row["source"], 0) + 1
+    return breakdown
 
 
 def answer_from_catalog(question: str, courses: Dict[str, Dict]) -> Tuple[str, bool]:
@@ -594,8 +647,21 @@ def render_dashboard(courses: Dict[str, Dict]) -> None:
 
 def render_sidebar(courses: Dict[str, Dict]) -> None:
     with st.sidebar:
-        st.header("Course Library")
-        st.caption("Explore the catalog")
+        st.header("Workspace")
+        st.markdown(
+            """
+            <div class="nav-card">
+                <div class="course-name">Public Assistant</div>
+                <div class="course-meta">Chatbot, lead form, and course library for students and prospects.</div>
+            </div>
+            <div class="nav-card">
+                <div class="course-name">Admin Panel</div>
+                <div class="course-meta">Protected analytics view for lead records and workflow activity.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown("**Course Library**")
         for course in courses.values():
             st.markdown(
                 f"""
@@ -649,11 +715,58 @@ def render_lead_form(courses: Dict[str, Dict]) -> None:
 
 
 def render_admin_dashboard() -> None:
-    st.markdown('<div class="section-label">Admin Dashboard</div>', unsafe_allow_html=True)
-    tabs = st.tabs(["Lead Records", "Automation Logs"])
-
     leads = fetch_leads()
     logs = fetch_automation_logs()
+    source_breakdown = get_source_breakdown()
+    latest_source = next(iter(source_breakdown.items()), ("No source yet", 0))
+
+    st.markdown(
+        """
+        <div class="admin-shell">
+            <div class="admin-title">Admin Operations Panel</div>
+            <div class="admin-copy">Monitor captured leads, recent automation events, and the current health of your funnel from one place.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(
+            f"""
+            <div class="stat-card">
+                <div class="stat-label">Total Leads</div>
+                <div class="stat-value">{len(leads)}</div>
+                <div class="stat-note">Every form submission is stored in SQLite for later follow-up.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with col2:
+        st.markdown(
+            f"""
+            <div class="stat-card">
+                <div class="stat-label">Automation Events</div>
+                <div class="stat-value">{len(logs)}</div>
+                <div class="stat-note">Lead capture workflow writes an event log after each successful submission.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with col3:
+        st.markdown(
+            f"""
+            <div class="stat-card">
+                <div class="stat-label">Top Lead Source</div>
+                <div class="stat-value">{latest_source[0]}</div>
+                <div class="stat-note">{latest_source[1]} submissions currently mapped to this source.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown('<div class="section-label">Admin Dashboard</div>', unsafe_allow_html=True)
+    tabs = st.tabs(["Lead Records", "Automation Logs"])
 
     with tabs[0]:
         if leads:
@@ -687,6 +800,64 @@ def render_admin_dashboard() -> None:
             st.info("No automation events logged yet.")
 
 
+def render_admin_panel(admin_password: str) -> None:
+    if "admin_authenticated" not in st.session_state:
+        st.session_state.admin_authenticated = False
+
+    st.markdown(
+        """
+        <div class="hero-panel">
+            <div class="hero-eyebrow">Protected Workspace</div>
+            <h1 class="hero-title">Admin control for leads and automations.</h1>
+            <p class="hero-subtitle">
+                Use the admin password to review lead records, inspect automation activity, and present the business workflow separately from the public chatbot view.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if not st.session_state.admin_authenticated:
+        st.markdown(
+            """
+            <div class="admin-lock">
+                <div class="panel-title">Admin access required</div>
+                <div class="panel-copy">This panel is hidden from public users and opens only after password verification.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        with st.form("admin_login_form"):
+            admin_input = st.text_input("Admin Password", type="password")
+            login_submitted = st.form_submit_button("Unlock Admin Panel")
+        if login_submitted:
+            if admin_input == admin_password:
+                st.session_state.admin_authenticated = True
+                st.success("Admin panel unlocked.")
+                st.rerun()
+            else:
+                st.error("Incorrect admin password.")
+        return
+
+    top_col1, top_col2 = st.columns([4, 1])
+    with top_col1:
+        st.markdown(
+            """
+            <div class="panel-card">
+                <div class="panel-title">Access granted</div>
+                <div class="panel-copy">You are now viewing the private admin surface. Public visitors cannot see this section unless they unlock it.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with top_col2:
+        if st.button("Logout", key="admin_logout"):
+            st.session_state.admin_authenticated = False
+            st.rerun()
+
+    render_admin_dashboard()
+
+
 def render_suggestions() -> str | None:
     st.markdown('<div class="section-label">Popular Questions</div>', unsafe_allow_html=True)
     st.markdown(
@@ -717,8 +888,20 @@ def main() -> None:
     init_db()
     courses = load_courses()
     env_api_key = get_api_key()
+    admin_password = get_admin_password()
 
     render_sidebar(courses)
+    panel_mode = st.radio(
+        "Workspace View",
+        options=["Assistant", "Admin Panel"],
+        horizontal=True,
+        label_visibility="collapsed",
+    )
+
+    if panel_mode == "Admin Panel":
+        render_admin_panel(admin_password)
+        return
+
     render_dashboard(courses)
     render_lead_form(courses)
 
@@ -735,8 +918,6 @@ def main() -> None:
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
-
-    render_admin_dashboard()
 
     prompt = st.chat_input("Ask a course question or enter any prompt")
     prompt = prompt or suggested_prompt
