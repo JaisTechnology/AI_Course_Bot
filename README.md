@@ -25,6 +25,7 @@ An AI-powered Streamlit application that combines a course-aware chatbot, lead c
 
    ```env
    GROQ_API_KEY=your_api_key_here
+   ADMIN_PASSWORD=your_admin_password
    ```
 
 4. Start the app:
@@ -34,6 +35,8 @@ An AI-powered Streamlit application that combines a course-aware chatbot, lead c
    ```
 
 5. Open the local URL shown by Streamlit.
+
+For deployment on Streamlit Cloud, add both `GROQ_API_KEY` and `ADMIN_PASSWORD` in app secrets.
 
 ## Project modules
 
@@ -51,7 +54,7 @@ An AI-powered Streamlit application that combines a course-aware chatbot, lead c
    - On lead form submission, the app stores the lead and logs an automation event
 
 5. Admin dashboard
-   - Displays captured leads and recent automation activity
+   - Protected admin panel for captured leads and recent automation activity
 
 ## Files
 
