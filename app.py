@@ -852,17 +852,7 @@ def render_admin_panel(admin_password: str) -> None:
                 st.error("Incorrect admin password.")
         return
 
-    top_col1, top_col2 = st.columns([4, 1])
-    with top_col1:
-        st.markdown(
-            """
-            <div class="panel-card">
-                <div class="panel-title">Access granted</div>
-                <div class="panel-copy">You are now viewing the private admin surface. Public visitors cannot see this section unless they unlock it.</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    top_col1, top_col2 = st.columns([5, 1])
     with top_col2:
         if st.button("Logout", key="admin_logout"):
             st.session_state.admin_authenticated = False
