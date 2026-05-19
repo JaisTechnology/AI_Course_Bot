@@ -675,6 +675,19 @@ def render_sidebar(courses: Dict[str, Dict]) -> None:
 
 
 def render_lead_form(courses: Dict[str, Dict]) -> None:
+    st.markdown(
+        """
+        <div class="hero-panel">
+            <div class="hero-eyebrow">Inquiry Desk</div>
+            <h1 class="hero-title">Share your details and we will reach out.</h1>
+            <p class="hero-subtitle">
+                Use this separate inquiry form for counseling requests, callbacks, and admission interest.
+                Every submission is saved and tracked inside the admin workflow.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.markdown('<div class="section-label">Lead Capture Form</div>', unsafe_allow_html=True)
     st.markdown(
         """
@@ -893,7 +906,7 @@ def main() -> None:
     render_sidebar(courses)
     panel_mode = st.radio(
         "Workspace View",
-        options=["Assistant", "Admin Panel"],
+        options=["Assistant", "Submit Inquiry", "Admin Panel"],
         horizontal=True,
         label_visibility="collapsed",
     )
@@ -902,8 +915,12 @@ def main() -> None:
         render_admin_panel(admin_password)
         return
 
+    if panel_mode == "Submit Inquiry":
+        render_dashboard(courses)
+        render_lead_form(courses)
+        return
+
     render_dashboard(courses)
-    render_lead_form(courses)
 
     if "messages" not in st.session_state:
         st.session_state.messages = [
