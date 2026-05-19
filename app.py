@@ -13,6 +13,12 @@ except ImportError:
     Groq = None
 
 try:
+    from supabase import Client, create_client
+except ImportError:
+    Client = None
+    create_client = None
+
+try:
     from dotenv import load_dotenv
 except ImportError:
     load_dotenv = None
@@ -22,6 +28,8 @@ DATA_FILE = Path(__file__).parent / "course_data.json"
 ENV_FILE = Path(__file__).parent / ".env"
 DB_FILE = Path(__file__).parent / "automation_assistant.db"
 DEFAULT_CHAT_MODEL = "llama-3.3-70b-versatile"
+LEADS_TABLE_NAME = "leads"
+AUTOMATION_TABLE_NAME = "automation_logs"
 
 
 def load_courses() -> Dict[str, Dict]:
@@ -36,7 +44,45 @@ def get_db_connection() -> sqlite3.Connection:
     return connection
 
 
+def get_supabase_url() -> str:
+    secret_value = st.secrets.get("SUPABASE_URL", "")
+    if secret_value:
+        return str(secret_value)
+    return os.getenv("SUPABASE_URL", "")
+
+
+def get_supabase_key() -> str:
+    secret_value = st.secrets.get("SUPABASE_KEY", "")
+    if secret_value:
+        return str(secret_value)
+    return os.getenv("SUPABASE_KEY", "")
+
+
+def use_supabase_storage() -> bool:
+    return bool(get_supabase_url() and get_supabase_key())
+
+
+def get_storage_label() -> str:
+    if use_supabase_storage():
+        return "Supabase"
+    return "SQLite"
+
+
+def get_supabase_client() -> Client:
+    if create_client is None:
+        raise RuntimeError("The supabase package is not installed. Run `pip install -r requirements.txt`.")
+
+    supabase_url = get_supabase_url()
+    supabase_key = get_supabase_key()
+    if not supabase_url or not supabase_key:
+        raise RuntimeError("Supabase storage is not configured.")
+    return create_client(supabase_url, supabase_key)
+
+
 def init_db() -> None:
+    if use_supabase_storage():
+        return
+
     with get_db_connection() as connection:
         connection.execute(
             """
@@ -67,6 +113,17 @@ def init_db() -> None:
 
 def log_automation_event(event_type: str, details: str) -> None:
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if use_supabase_storage():
+        client = get_supabase_client()
+        client.table(AUTOMATION_TABLE_NAME).insert(
+            {
+                "event_type": event_type,
+                "details": details,
+                "created_at": timestamp,
+            }
+        ).execute()
+        return
+
     with get_db_connection() as connection:
         connection.execute(
             "INSERT INTO automation_logs (event_type, details, created_at) VALUES (?, ?, ?)",
@@ -77,6 +134,25 @@ def log_automation_event(event_type: str, details: str) -> None:
 
 def save_lead(full_name: str, email: str, phone: str, interested_course: str, message: str, source: str) -> None:
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if use_supabase_storage():
+        client = get_supabase_client()
+        client.table(LEADS_TABLE_NAME).insert(
+            {
+                "full_name": full_name,
+                "email": email,
+                "phone": phone,
+                "interested_course": interested_course,
+                "message": message,
+                "source": source,
+                "created_at": timestamp,
+            }
+        ).execute()
+        log_automation_event(
+            "lead_capture",
+            f"Lead captured for {interested_course} from {full_name} ({email}) via {source}.",
+        )
+        return
+
     with get_db_connection() as connection:
         connection.execute(
             """
@@ -92,7 +168,12 @@ def save_lead(full_name: str, email: str, phone: str, interested_course: str, me
     )
 
 
-def fetch_leads() -> List[sqlite3.Row]:
+def fetch_leads() -> List[Dict[str, str]]:
+    if use_supabase_storage():
+        client = get_supabase_client()
+        response = client.table(LEADS_TABLE_NAME).select("*").order("id", desc=True).execute()
+        return [{key: str(value) for key, value in row.items()} for row in response.data]
+
     with get_db_connection() as connection:
         rows = connection.execute(
             """
@@ -101,20 +182,27 @@ def fetch_leads() -> List[sqlite3.Row]:
             ORDER BY id DESC
             """
         ).fetchall()
-    return rows
+    return [dict(row) for row in rows]
 
 
-def fetch_automation_logs() -> List[sqlite3.Row]:
+def fetch_automation_logs(limit: int = 10) -> List[Dict[str, str]]:
+    if use_supabase_storage():
+        client = get_supabase_client()
+        response = client.table(AUTOMATION_TABLE_NAME).select("*").order("id", desc=True).limit(limit).execute()
+        return [{key: str(value) for key, value in row.items()} for row in response.data]
+
     with get_db_connection() as connection:
         rows = connection.execute(
             """
             SELECT id, event_type, details, created_at
             FROM automation_logs
             ORDER BY id DESC
-            LIMIT 10
+            LIMIT ?
             """
+            ,
+            (limit,),
         ).fetchall()
-    return rows
+    return [dict(row) for row in rows]
 
 
 def load_environment() -> None:
@@ -133,7 +221,7 @@ def get_admin_password() -> str:
     secret_value = st.secrets.get("ADMIN_PASSWORD", "")
     if secret_value:
         return str(secret_value)
-    return os.getenv("ADMIN_PASSWORD", "admin123")
+    return os.getenv("ADMIN_PASSWORD", "")
 
 
 def inject_styles() -> None:
@@ -476,7 +564,8 @@ def get_source_breakdown() -> Dict[str, int]:
     leads = fetch_leads()
     breakdown: Dict[str, int] = {}
     for row in leads:
-        breakdown[row["source"]] = breakdown.get(row["source"], 0) + 1
+        source = row.get("source", "Unknown")
+        breakdown[source] = breakdown.get(source, 0) + 1
     return breakdown
 
 
@@ -582,7 +671,6 @@ def generate_response(
 
 def render_dashboard(courses: Dict[str, Dict]) -> None:
     total_courses, beginner_courses, online_courses = get_dashboard_stats(courses)
-    total_leads, logged_automations = get_lead_stats()
 
     st.markdown(
         """
@@ -598,7 +686,7 @@ def render_dashboard(courses: Dict[str, Dict]) -> None:
         unsafe_allow_html=True,
     )
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown(
             f"""
@@ -632,35 +720,25 @@ def render_dashboard(courses: Dict[str, Dict]) -> None:
             """,
             unsafe_allow_html=True,
         )
-    with col4:
-        st.markdown(
-            f"""
-            <div class="stat-card">
-                <div class="stat-label">Captured Leads</div>
-                <div class="stat-value">{total_leads}</div>
-                <div class="stat-note">{logged_automations} automation events logged from form submissions and workflows.</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
 
 
-def render_sidebar(courses: Dict[str, Dict]) -> None:
+def render_sidebar(courses: Dict[str, Dict], admin_enabled: bool) -> None:
     with st.sidebar:
         st.header("Workspace")
-        st.markdown(
-            """
+        admin_card = """
             <div class="nav-card">
                 <div class="course-name">Public Assistant</div>
                 <div class="course-meta">Chatbot, lead form, and course library for students and prospects.</div>
             </div>
+        """
+        if admin_enabled:
+            admin_card += """
             <div class="nav-card">
                 <div class="course-name">Admin Panel</div>
                 <div class="course-meta">Protected analytics view for lead records and workflow activity.</div>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
+            """
+        st.markdown(admin_card, unsafe_allow_html=True)
         st.markdown("**Course Library**")
         for course in courses.values():
             st.markdown(
@@ -706,15 +784,18 @@ def render_lead_form(courses: Dict[str, Dict]) -> None:
         if not full_name.strip() or not email.strip() or not phone.strip():
             st.warning("Please fill in name, email, and phone before submitting the lead.")
         else:
-            save_lead(
-                full_name=full_name.strip(),
-                email=email.strip(),
-                phone=phone.strip(),
-                interested_course=interested_course,
-                message=message.strip(),
-                source=source,
-            )
-            st.success("Lead captured successfully. Automation log updated.")
+            try:
+                save_lead(
+                    full_name=full_name.strip(),
+                    email=email.strip(),
+                    phone=phone.strip(),
+                    interested_course=interested_course,
+                    message=message.strip(),
+                    source=source,
+                )
+                st.success(f"Lead captured successfully. Stored in {get_storage_label()}.")
+            except Exception as exc:
+                st.error(f"Lead submission failed: {exc}")
 
 
 def render_admin_dashboard() -> None:
@@ -740,7 +821,7 @@ def render_admin_dashboard() -> None:
             <div class="stat-card">
                 <div class="stat-label">Total Leads</div>
                 <div class="stat-value">{len(leads)}</div>
-                <div class="stat-note">Every form submission is stored in SQLite for later follow-up.</div>
+                <div class="stat-note">Every form submission is stored in {get_storage_label()} for later follow-up.</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -775,12 +856,12 @@ def render_admin_dashboard() -> None:
         if leads:
             lead_table = [
                 {
-                    "Name": row["full_name"],
-                    "Email": row["email"],
-                    "Phone": row["phone"],
-                    "Course": row["interested_course"],
-                    "Source": row["source"],
-                    "Submitted At": row["created_at"],
+                    "Name": row.get("full_name", ""),
+                    "Email": row.get("email", ""),
+                    "Phone": row.get("phone", ""),
+                    "Course": row.get("interested_course", ""),
+                    "Source": row.get("source", ""),
+                    "Submitted At": row.get("created_at", ""),
                 }
                 for row in leads
             ]
@@ -792,9 +873,9 @@ def render_admin_dashboard() -> None:
         if logs:
             log_table = [
                 {
-                    "Event": row["event_type"],
-                    "Details": row["details"],
-                    "Created At": row["created_at"],
+                    "Event": row.get("event_type", ""),
+                    "Details": row.get("details", ""),
+                    "Created At": row.get("created_at", ""),
                 }
                 for row in logs
             ]
@@ -804,6 +885,18 @@ def render_admin_dashboard() -> None:
 
 
 def render_admin_panel(admin_password: str) -> None:
+    if not admin_password:
+        st.markdown(
+            """
+            <div class="admin-lock">
+                <div class="panel-title">Admin panel unavailable</div>
+                <div class="panel-copy">Set ADMIN_PASSWORD in .env or Streamlit secrets to enable private admin access.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        return
+
     if "admin_authenticated" not in st.session_state:
         st.session_state.admin_authenticated = False
 
@@ -882,11 +975,15 @@ def main() -> None:
     courses = load_courses()
     env_api_key = get_api_key()
     admin_password = get_admin_password()
+    admin_enabled = bool(admin_password)
 
-    render_sidebar(courses)
+    render_sidebar(courses, admin_enabled)
+    workspace_options = ["Assistant", "Submit Inquiry"]
+    if admin_enabled:
+        workspace_options.append("Admin Panel")
     panel_mode = st.radio(
         "Workspace View",
-        options=["Assistant", "Submit Inquiry", "Admin Panel"],
+        options=workspace_options,
         horizontal=True,
         label_visibility="collapsed",
     )
