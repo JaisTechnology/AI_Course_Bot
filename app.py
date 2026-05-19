@@ -688,16 +688,6 @@ def render_lead_form(courses: Dict[str, Dict]) -> None:
         """,
         unsafe_allow_html=True,
     )
-    st.markdown('<div class="section-label">Lead Capture Form</div>', unsafe_allow_html=True)
-    st.markdown(
-        """
-        <div class="panel-card">
-            <div class="panel-title">Request a callback or counseling session</div>
-            <div class="panel-copy">This form stores leads in SQLite and triggers an automation log entry after submission.</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
     course_names = [course["name"] for course in courses.values()]
     with st.form("lead_capture_form", clear_on_submit=True):
