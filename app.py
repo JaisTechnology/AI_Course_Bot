@@ -228,37 +228,54 @@ def inject_styles() -> None:
     st.markdown(
         """
         <style>
+            :root {
+                --bg: #07111f;
+                --bg-soft: rgba(11, 22, 40, 0.82);
+                --panel: rgba(12, 24, 43, 0.82);
+                --panel-strong: rgba(15, 23, 42, 0.96);
+                --border: rgba(148, 163, 184, 0.14);
+                --text: #e5edf7;
+                --muted: #94a3b8;
+                --accent: #f97316;
+                --accent-soft: rgba(249, 115, 22, 0.14);
+                --accent-2: #38bdf8;
+                --success: #22c55e;
+            }
+
             .stApp {
                 background:
-                    radial-gradient(circle at top left, rgba(249, 115, 22, 0.10), transparent 28%),
-                    radial-gradient(circle at top right, rgba(59, 130, 246, 0.10), transparent 24%),
-                    #0b1020;
-                color: #e5e7eb;
+                    radial-gradient(circle at 12% 10%, rgba(249, 115, 22, 0.14), transparent 24%),
+                    radial-gradient(circle at 88% 8%, rgba(56, 189, 248, 0.14), transparent 20%),
+                    linear-gradient(180deg, #07111f 0%, #0b1326 46%, #0a1120 100%);
+                color: var(--text);
             }
 
             .block-container {
-                max-width: 1120px;
-                padding-top: 2.2rem;
-                padding-bottom: 2rem;
+                max-width: 1180px;
+                padding-top: 1.4rem;
+                padding-bottom: 2.4rem;
             }
 
             [data-testid="stSidebar"] {
-                background: rgba(15, 23, 42, 0.94);
-                border-right: 1px solid rgba(148, 163, 184, 0.12);
+                background: linear-gradient(180deg, rgba(8, 15, 30, 0.98), rgba(12, 22, 39, 0.98));
+                border-right: 1px solid var(--border);
             }
 
             [data-testid="stSidebar"] .block-container {
-                padding-top: 1.6rem;
+                padding-top: 1.1rem;
             }
 
             .hero-panel {
                 position: relative;
                 overflow: hidden;
-                padding: 1.5rem 1.6rem;
-                border: 1px solid rgba(148, 163, 184, 0.18);
-                border-radius: 8px;
-                background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(17, 24, 39, 0.82));
-                box-shadow: 0 18px 45px rgba(15, 23, 42, 0.28);
+                padding: 1.65rem 1.75rem;
+                border: 1px solid rgba(148, 163, 184, 0.16);
+                border-radius: 10px;
+                background:
+                    linear-gradient(135deg, rgba(17, 24, 39, 0.86), rgba(15, 23, 42, 0.94)),
+                    linear-gradient(180deg, rgba(56, 189, 248, 0.05), transparent 55%);
+                box-shadow: 0 22px 60px rgba(2, 6, 23, 0.34);
+                backdrop-filter: blur(18px);
                 animation: fade-up 0.55s ease-out;
             }
 
@@ -266,7 +283,7 @@ def inject_styles() -> None:
                 content: "";
                 position: absolute;
                 inset: 0;
-                background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.08) 45%, transparent 100%);
+                background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.07) 45%, transparent 100%);
                 transform: translateX(-120%);
                 animation: sheen 5.2s linear infinite;
             }
@@ -277,7 +294,7 @@ def inject_styles() -> None:
                 gap: 0.45rem;
                 padding: 0.35rem 0.7rem;
                 border-radius: 999px;
-                background: rgba(249, 115, 22, 0.16);
+                background: var(--accent-soft);
                 color: #fdba74;
                 font-size: 0.78rem;
                 font-weight: 600;
@@ -286,28 +303,31 @@ def inject_styles() -> None:
             }
 
             .hero-title {
-                font-size: 2.2rem;
-                line-height: 1.05;
+                font-size: 2.45rem;
+                line-height: 1.02;
                 font-weight: 700;
                 color: #f8fafc;
                 margin: 0;
+                max-width: 13ch;
             }
 
             .hero-subtitle {
                 margin: 0.85rem 0 0;
-                max-width: 48rem;
+                max-width: 49rem;
                 color: #cbd5e1;
-                font-size: 1rem;
-                line-height: 1.65;
+                font-size: 1.01rem;
+                line-height: 1.72;
             }
 
             .stat-card {
                 padding: 1rem 1.05rem;
-                border: 1px solid rgba(148, 163, 184, 0.16);
-                border-radius: 8px;
-                background: rgba(15, 23, 42, 0.72);
+                border: 1px solid rgba(148, 163, 184, 0.14);
+                border-radius: 10px;
+                background: linear-gradient(180deg, rgba(12, 24, 43, 0.88), rgba(15, 23, 42, 0.72));
                 min-height: 116px;
-                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+                box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+                    0 10px 30px rgba(2, 6, 23, 0.16);
                 animation: fade-up 0.7s ease-out;
             }
 
@@ -333,30 +353,51 @@ def inject_styles() -> None:
 
             .section-label {
                 color: #f8fafc;
-                font-size: 1rem;
+                font-size: 1.02rem;
                 font-weight: 600;
-                margin: 1.2rem 0 0.7rem;
+                margin: 1.35rem 0 0.75rem;
             }
 
             .suggestion-strip {
-                margin: 0.2rem 0 0.4rem;
+                margin: 0.2rem 0 0.55rem;
                 color: #94a3b8;
                 font-size: 0.92rem;
             }
 
+            .mini-band {
+                margin-top: 1rem;
+                margin-bottom: 0.55rem;
+                display: flex;
+                gap: 0.7rem;
+                flex-wrap: wrap;
+            }
+
+            .mini-chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.45rem;
+                padding: 0.6rem 0.82rem;
+                border: 1px solid var(--border);
+                border-radius: 999px;
+                background: rgba(10, 18, 34, 0.78);
+                color: #dbe7f5;
+                font-size: 0.85rem;
+            }
+
             .course-card {
-                padding: 0.95rem 1rem;
+                padding: 1rem 1rem;
                 border: 1px solid rgba(148, 163, 184, 0.12);
-                border-radius: 8px;
-                background: rgba(15, 23, 42, 0.6);
+                border-radius: 10px;
+                background: linear-gradient(180deg, rgba(12, 24, 43, 0.86), rgba(15, 23, 42, 0.72));
                 margin-bottom: 0.75rem;
-                transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+                transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
             }
 
             .course-card:hover {
                 transform: translateY(-2px);
                 border-color: rgba(249, 115, 22, 0.35);
-                background: rgba(30, 41, 59, 0.82);
+                background: linear-gradient(180deg, rgba(18, 31, 54, 0.95), rgba(23, 36, 58, 0.86));
+                box-shadow: 0 12px 26px rgba(2, 6, 23, 0.18);
             }
 
             .course-name {
@@ -375,8 +416,8 @@ def inject_styles() -> None:
             .panel-card {
                 padding: 1rem 1.05rem;
                 border: 1px solid rgba(148, 163, 184, 0.14);
-                border-radius: 8px;
-                background: rgba(15, 23, 42, 0.7);
+                border-radius: 10px;
+                background: linear-gradient(180deg, rgba(12, 24, 43, 0.88), rgba(15, 23, 42, 0.76));
                 margin-bottom: 1rem;
                 animation: fade-up 0.45s ease-out;
             }
@@ -397,7 +438,7 @@ def inject_styles() -> None:
             .admin-shell {
                 padding: 1.25rem;
                 border: 1px solid rgba(96, 165, 250, 0.18);
-                border-radius: 8px;
+                border-radius: 10px;
                 background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.82));
                 margin-bottom: 1rem;
                 animation: fade-up 0.45s ease-out;
@@ -425,18 +466,19 @@ def inject_styles() -> None:
             }
 
             .nav-card {
-                padding: 0.9rem 1rem;
+                padding: 0.95rem 1rem;
                 border: 1px solid rgba(148, 163, 184, 0.12);
-                border-radius: 8px;
-                background: rgba(15, 23, 42, 0.74);
+                border-radius: 10px;
+                background: linear-gradient(180deg, rgba(12, 24, 43, 0.85), rgba(15, 23, 42, 0.72));
                 margin-bottom: 0.9rem;
             }
 
             [data-testid="stChatMessage"] {
-                border: 1px solid rgba(148, 163, 184, 0.12);
-                border-radius: 8px;
-                background: rgba(15, 23, 42, 0.64);
+                border: 1px solid rgba(148, 163, 184, 0.11);
+                border-radius: 10px;
+                background: linear-gradient(180deg, rgba(12, 24, 43, 0.86), rgba(15, 23, 42, 0.7));
                 animation: fade-up 0.35s ease-out;
+                box-shadow: 0 10px 26px rgba(2, 6, 23, 0.12);
             }
 
             [data-testid="stChatMessageContent"] p {
@@ -444,25 +486,89 @@ def inject_styles() -> None:
                 color: #e5e7eb;
             }
 
+            [data-testid="stChatMessageAvatarUser"] + [data-testid="stChatMessageContent"] {
+                background: rgba(13, 31, 53, 0.34);
+            }
+
             .stButton > button {
                 width: 100%;
-                border-radius: 8px;
-                border: 1px solid rgba(148, 163, 184, 0.18);
-                background: rgba(15, 23, 42, 0.78);
+                border-radius: 10px;
+                border: 1px solid rgba(148, 163, 184, 0.14);
+                background: linear-gradient(180deg, rgba(18, 31, 54, 0.92), rgba(15, 23, 42, 0.88));
                 color: #e5e7eb;
                 min-height: 2.8rem;
                 transition: all 160ms ease;
+                font-weight: 600;
             }
 
             .stButton > button:hover {
-                border-color: rgba(249, 115, 22, 0.45);
+                border-color: rgba(249, 115, 22, 0.4);
                 color: #fff7ed;
-                background: rgba(30, 41, 59, 0.95);
+                background: linear-gradient(180deg, rgba(38, 51, 75, 0.96), rgba(24, 35, 56, 0.96));
+                box-shadow: 0 10px 24px rgba(2, 6, 23, 0.18);
             }
 
             [data-testid="stChatInput"] {
                 border-top: 1px solid rgba(148, 163, 184, 0.1);
                 background: rgba(11, 16, 32, 0.92);
+            }
+
+            [data-baseweb="input"] > div,
+            [data-baseweb="select"] > div,
+            [data-baseweb="textarea"] {
+                border-radius: 10px !important;
+                background: rgba(19, 29, 48, 0.96) !important;
+                border-color: rgba(148, 163, 184, 0.12) !important;
+            }
+
+            [data-baseweb="tab-list"] {
+                gap: 0.35rem;
+            }
+
+            button[role="tab"] {
+                border-radius: 10px !important;
+                background: rgba(12, 24, 43, 0.72) !important;
+                border: 1px solid rgba(148, 163, 184, 0.12) !important;
+                color: #dbe4ef !important;
+                padding: 0.55rem 1rem !important;
+            }
+
+            button[role="tab"][aria-selected="true"] {
+                background: linear-gradient(180deg, rgba(249, 115, 22, 0.18), rgba(56, 189, 248, 0.08)) !important;
+                border-color: rgba(249, 115, 22, 0.35) !important;
+                color: #fff7ed !important;
+            }
+
+            [data-testid="stDataFrame"] {
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                overflow: hidden;
+                background: rgba(12, 24, 43, 0.8);
+            }
+
+            [data-testid="stRadio"] > div {
+                background: rgba(9, 18, 33, 0.78);
+                border: 1px solid var(--border);
+                border-radius: 999px;
+                padding: 0.3rem;
+                display: inline-flex;
+                gap: 0.35rem;
+            }
+
+            [data-testid="stRadio"] label {
+                background: transparent !important;
+                border-radius: 999px;
+                padding: 0.25rem 0.5rem;
+            }
+
+            [data-testid="stRadio"] label:has(input:checked) {
+                background: linear-gradient(180deg, rgba(249, 115, 22, 0.22), rgba(56, 189, 248, 0.12)) !important;
+                box-shadow: inset 0 0 0 1px rgba(249, 115, 22, 0.25);
+            }
+
+            [data-testid="stAlert"] {
+                border-radius: 10px;
+                border: 1px solid rgba(148, 163, 184, 0.14);
             }
 
             @keyframes fade-up {
@@ -485,6 +591,20 @@ def inject_styles() -> None:
                 }
             }
         </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_highlight_band() -> None:
+    st.markdown(
+        """
+        <div class="mini-band">
+            <div class="mini-chip">AI Chat Guidance</div>
+            <div class="mini-chip">Lead Capture Workflow</div>
+            <div class="mini-chip">Protected Admin Operations</div>
+            <div class="mini-chip">Supabase Ready</div>
+        </div>
         """,
         unsafe_allow_html=True,
     )
@@ -685,6 +805,7 @@ def render_dashboard(courses: Dict[str, Dict]) -> None:
         """,
         unsafe_allow_html=True,
     )
+    render_highlight_band()
 
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -766,6 +887,16 @@ def render_lead_form(courses: Dict[str, Dict]) -> None:
         """,
         unsafe_allow_html=True,
     )
+    st.markdown(
+        """
+        <div class="mini-band">
+            <div class="mini-chip">Fast callback requests</div>
+            <div class="mini-chip">Stored in durable backend</div>
+            <div class="mini-chip">Automation event created automatically</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     course_names = [course["name"] for course in courses.values()]
     with st.form("lead_capture_form", clear_on_submit=True):
@@ -809,6 +940,16 @@ def render_admin_dashboard() -> None:
         <div class="admin-shell">
             <div class="admin-title">Admin Operations Panel</div>
             <div class="admin-copy">Monitor captured leads, recent automation events, and the current health of your funnel from one place.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        """
+        <div class="mini-band">
+            <div class="mini-chip">Private records view</div>
+            <div class="mini-chip">Lead funnel visibility</div>
+            <div class="mini-chip">Recent automation activity</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -981,6 +1122,12 @@ def main() -> None:
     workspace_options = ["Assistant", "Submit Inquiry"]
     if admin_enabled:
         workspace_options.append("Admin Panel")
+    st.markdown(
+        """
+        <div class="section-label" style="margin-top: 0.35rem; margin-bottom: 0.65rem;">Workspace View</div>
+        """,
+        unsafe_allow_html=True,
+    )
     panel_mode = st.radio(
         "Workspace View",
         options=workspace_options,
